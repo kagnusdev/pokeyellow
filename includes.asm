@@ -53,6 +53,8 @@ INCLUDE "constants/menu_constants.asm"
 INCLUDE "constants/sprite_anim_constants.asm"
 INCLUDE "constants/pikachu_emotion_constants.asm"
 
+INCLUDE "constants/trainer_data_constants.asm"
+
 IF DEF(_YELLOW_VC)
 INCLUDE "vc/pokeyellow.constants.asm"
 ENDC
