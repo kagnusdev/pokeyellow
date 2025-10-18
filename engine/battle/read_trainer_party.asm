@@ -1,3 +1,9 @@
+GetNextTrainerDataByte:
+	ld a, [wEnemyPartyBank]
+	call GetFarByte
+	inc hl
+	ret
+
 ReadTrainer:
 
 ; don't change any moves in a link battle
@@ -17,11 +23,16 @@ ReadTrainer:
 ; get the pointer to trainer data for this class
 	ld a, [wTrainerClass] ; get trainer class
 	dec a
+	ld c, a
 	add a
+	ASSERT $FF >= (3 * NUM_TRAINERS), "Too many trainer classes for this implementation of bc = a * 3"
+	add c
 	ld hl, TrainerDataPointers
 	ld c, a
 	ld b, 0
 	add hl, bc ; hl points to trainer class
+	ld a, [hli]
+	ld [wEnemyPartyBank], a
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
@@ -34,7 +45,7 @@ ReadTrainer:
 .CheckNextTrainer
 	dec b
 	jr z, .IterateTrainer
-	ld a, [hli]
+	call GetNextTrainerDataByte
 	add l
 	ld l, a
 	adc h
@@ -48,9 +59,9 @@ ReadTrainer:
 ; - if [wLoneAttackNo] != 0, one pokemon on the team has a special move
 ; else the first byte is the level of every pokemon on the team
 .IterateTrainer
-	ld a, [hli]
+	call GetNextTrainerDataByte
 	ld c, a
-	ld a, [hli]
+	call GetNextTrainerDataByte
 	dec c
 	ld [wEnemyPartyFlags], a
 .LoopTrainerData
@@ -58,12 +69,10 @@ ReadTrainer:
 ; - each pokemon has a specific level
 ;      (as opposed to the whole team being of the same level)
 ; - if [wLoneAttackNo] != 0, one pokemon on the team has a special move
-	ld a, [hli]
-	; and a ; have we reached the end of the trainer data?
-	; jr z, .AddAdditionalMoveData
+	call GetNextTrainerDataByte
 	dec c
 	ld [wCurEnemyLevel], a
-	ld a, [hli]
+	call GetNextTrainerDataByte
 	ld [wCurPartySpecies], a
 	ld a, ENEMY_PARTY_DATA
 	ld [wMonDataLocation], a
