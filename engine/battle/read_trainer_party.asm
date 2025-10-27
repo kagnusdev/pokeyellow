@@ -64,13 +64,21 @@ ReadTrainer:
 	call GetNextTrainerDataByte
 	dec c
 	ld [wEnemyPartyFlags], a
+	; c is remaining trainer data size
+	; so trainer data ends at hl + c
+	; set c to l + c to stop reading when l == c
+	ld a, l
+	add c
+	ld c, a
+	push bc
 .LoopTrainerData
-; if this code is being run:
-; - each pokemon has a specific level
-;      (as opposed to the whole team being of the same level)
-; - if [wLoneAttackNo] != 0, one pokemon on the team has a special move
+	pop bc
+	ld a, l
+	sub c ; have we reached the end of the trainer data?
+	jr z, .FinishUp
+	push bc
+
 	call GetNextTrainerDataByte
-	dec c
 	ld [wCurEnemyLevel], a
 	call GetNextTrainerDataByte
 	ld [wCurPartySpecies], a
@@ -79,50 +87,36 @@ ReadTrainer:
 	push hl
 	call AddPartyMon
 	pop hl
-	dec c ; have we reached the end of the trainer data?
-	jr nz, .LoopTrainerData
-.AddAdditionalMoveData
-; does the trainer have additional move data?
-	ld a, [wTrainerClass]
-	ld b, a
-	ld a, [wTrainerNo]
-	ld c, a
-	ld hl, SpecialTrainerMoves
-.loopAdditionalMoveData
-	ld a, [hli]
-	cp $ff
-	jr z, .FinishUp
-	cp b
-	jr nz, .loopSkipTrainer
-	ld a, [hli]
-	cp c
-	jr nz, .loopSkipTrainer
-	ld d, h
-	ld e, l
-.writeAdditionalMoveDataLoop
-	ld a, [de]
-	inc de
-	and a
-	jp z, .FinishUp
-	dec a
+
+; tr_moves loading
+; flag check
+	ld a, [wEnemyPartyFlags]
+	and TRAINERTYPE_MOVES
+	jr z, .noMoves
+
+; actual loading
+	ld a, [wEnemyPartyCount]
+	dec a ; last mon in team
+
+	push hl
 	ld hl, wEnemyMon1Moves
 	ld bc, wEnemyMon2 - wEnemyMon1
 	call AddNTimes
-	ld a, [de]
+	ld d, h
+	ld e, l
+	pop hl
+
+	ld b, NUM_MOVES
+.copyMoves
+	call GetNextTrainerDataByte
+	ld [de], a
 	inc de
-	dec a
-	ld c, a
-	ld b, 0
-	add hl, bc
-	ld a, [de]
-	inc de
-	ld [hl], a
-	jr .writeAdditionalMoveDataLoop
-.loopSkipTrainer
-	ld a, [hli]
-	and a
-	jr nz, .loopSkipTrainer
-	jr .loopAdditionalMoveData
+	dec b
+	jr nz, .copyMoves
+
+.noMoves
+	jr .LoopTrainerData
+
 .FinishUp
 ; clear wAmountMoneyWon addresses
 	xor a
