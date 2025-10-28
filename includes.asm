@@ -14,6 +14,8 @@ INCLUDE "macros/scripts/events.asm"
 INCLUDE "macros/scripts/text.asm"
 INCLUDE "macros/scripts/gfx_anims.asm"
 
+INCLUDE "macros/read_trainer_party.asm"
+
 INCLUDE "constants/charmap.asm"
 INCLUDE "constants/hardware.inc"
 INCLUDE "constants/oam_constants.asm"
