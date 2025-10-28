@@ -2596,3 +2596,5 @@ LanceData:
 	tr_mon 62, DRAGONITE
 		tr_moves BLIZZARD, FIRE_BLAST, THUNDER, HYPER_BEAM
 	end_trainer
+
+end_trainer_parties
